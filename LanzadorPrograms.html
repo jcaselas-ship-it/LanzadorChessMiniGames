@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess MiniGames</title>
+    <!-- Carga de Tailwind CSS para un diseño rápido y moderno --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Font Awesome para iconos de ajedrez --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Personalización de la fuente Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Fondo oscuro similar a GitHub */
+            color: #c9d1d9;
+        }
+        /* Estilo para los botones de programa */
+        .program-card {
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid #30363d;
+            /* Se aplica el color de fondo dinámico en JS */
+        }
+        .program-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5); /* Sombra más fuerte al hacer hover */
+            /* El hover mantendrá el color base para evitar saltos visuales */
+        }
+        .program-card:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        .icon-fa {
+            font-size: 2rem; /* Tamaño más grande para iconos de Font Awesome */
+            color: white; /* Cambiado a blanco para mejor contraste con los nuevos fondos de color */
+        }
+        /* Estilos para el tooltip de copyright */
+        .copyright-container {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .copyright-tooltip {
+            visibility: hidden;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Posiciona el tooltip encima del icono */
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap; /* Evita que el texto se rompa */
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .copyright-tooltip.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        .copyright-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex flex-col items-center">
+
+    <!-- Encabezado --><header class="text-center mb-10 w-full max-w-2xl mx-auto"> <!-- Contenedor de cabecera más estrecho --><h1 class="text-4xl font-extrabold text-[#58a6ff] mb-2">Chess MiniGames</h1>
+        <p class="text-gray-400 text-lg">Haz clic en una tarjeta para iniciar el programa o juego en una nueva pestaña.</p>
+    </header>
+
+    <!-- Contenedor principal de los programas. Ahora más estrecho y con 2 columnas por defecto --><main id="programs-container" class="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl"></main> <!-- Max-width ajustado --><!-- Modal para notificaciones --><div id="modal-message" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+        <div class="bg-[#161b22] p-6 rounded-lg shadow-xl max-w-sm w-full border border-[#30363d]">
+            <h3 id="modal-title" class="text-xl font-bold mb-4 text-[#58a6ff]">Aviso</h3>
+            <p id="modal-text" class="text-gray-300 mb-6"></p>
+            <button onclick="document.getElementById('modal-message').classList.add('hidden')"
+                    class="w-full bg-[#58a6ff] text-[#0d1117] font-semibold py-2 rounded-lg hover:bg-opacity-90 transition">
+                Aceptar
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenedor de Copyright --><div class="copyright-container mt-12 mb-4">
+        <i class="fa-regular fa-copyright text-gray-500 text-xl" onclick="toggleCopyrightTooltip()"></i>
+        <div id="copyright-tooltip" class="copyright-tooltip">
+            Gemini + JCaselas 2025
+        </div>
+    </div>
+
+    <script>
+        const programs = [
+            { name: "Memory Chess Pieces", url: "https://jcaselas-ship-it.github.io/memorychesspieces/" },
+            { name: "Memory Piezas Movimiento", url: "https://jcaselas-ship-it.github.io/memorychesspiezasmove/" },
+            { name: "Memory Piezas Puntos", url: "https://jcaselas-ship-it.github.io/MatchPiezasPuntos/" },
+            { name: "Laberinto del Rey", url: "https://jcaselas-ship-it.github.io/ChessMaze/" },
+            { name: "Reto Dama", url: "https://jcaselas-ship-it.github.io/reto-dama/" },
+            { name: "Caballo come estrellas", url: "https://jcaselas-ship-it.github.io/KingthTour/" },
+            { name: "Recorrido Caballo", url: "https://jcaselas-ship-it.github.io/RecorridoCaballo/" },
+            { name: "Doble Dama", url: "https://jcaselas-ship-it.github.io/AtaqueDobleDama/" },
+            { name: "N Damas", url: "https://jcaselas-ship-it.github.io/NDamas/" },
+            { name: "Reinas del tablero", url: "https://jcaselas-ship-it.github.io/ReinasTablero/" },
+            { name: "Maxi puntos", url: "https://jcaselas-ship-it.github.io/Maxipuntos/" },
+            { name: "Ataques piezas", url: "https://jcaselas-ship-it.github.io/Piezasatacadas/" },
+            { name: "Chess crush", url: "https://jcaselas-ship-it.github.io/chesscrush/" },
+            { name: "Serpiente Ajedrez", url: "https://jcaselas-ship-it.github.io/snakechess/" }
+        ];
+
+        // Paleta de colores más vivos: Rojizo, Verde, Naranja, Morado, Azul, Rosa
+        // Se ha sustituido el amarillo por un naranja más brillante.
+        const cardColors = [
+            'bg-red-700',      // Rojo oscuro
+            'bg-emerald-700',  // Verde esmeralda oscuro
+            'bg-orange-700',   // Naranja vibrante
+            'bg-indigo-700',   // Morado oscuro
+            'bg-cyan-700',     // Cian oscuro
+            'bg-pink-700',     // Rosa oscuro
+        ];
+
+        function showModal(title, text) {
+            const modal = document.getElementById('modal-message');
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-text').textContent = text;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function executeProgram(url, name) {
+            try {
+                if (!url.startsWith('http')) {
+                    throw new Error("La URL no es válida. Debe comenzar con http(s).");
+                }
+                window.open(url, '_blank');
+            } catch (error) {
+                console.error("Error al ejecutar el programa:", error);
+                showModal("Error de Enlace", `No se pudo lanzar el programa "${name}". Verifica que la URL sea correcta: ${url}`);
+            }
+        }
+
+        // Función para obtener el icono de Font Awesome basado en el nombre del programa
+        function getFaIconClass(programName) {
+            const lowerName = programName.toLowerCase();
+            if (lowerName.includes("dama") || lowerName.includes("reina")) {
+                return "fa-solid fa-chess-queen";
+            }
+            if (lowerName.includes("caballo")) {
+                return "fa-solid fa-chess-knight";
+            }
+            if (lowerName.includes("rey")) {
+                return "fa-solid fa-chess-king";
+            }
+            if (lowerName.includes("torre") || lowerName.includes("rook")) { // Por si acaso para futuros juegos
+                return "fa-solid fa-chess-rook";
+            }
+            if (lowerName.includes("alfil") || lowerName.includes("bishop")) { // Por si acaso
+                return "fa-solid fa-chess-bishop";
+            }
+            if (lowerName.includes("tablero") || lowerName.includes("chess") || lowerName.includes("pieces") || lowerName.includes("piezas")) {
+                return "fa-solid fa-chess-board";
+            }
+            if (lowerName.includes("movimiento") || lowerName.includes("recorrido") || lowerName.includes("maze")) {
+                return "fa-solid fa-route"; // Un icono que representa movimiento o camino
+            }
+            if (lowerName.includes("puntos") || lowerName.includes("crush") || lowerName.includes("reto") || lowerName.includes("maxi")) {
+                return "fa-solid fa-star"; // Para puntos o logros
+            }
+            if (lowerName.includes("snake")) {
+                return "fa-solid fa-snake"; // Para el juego de la serpiente
+            }
+            return "fa-solid fa-chess"; // Icono de ajedrez por defecto
+        }
+
+        function renderPrograms() {
+            const container = document.getElementById('programs-container');
+            container.innerHTML = ''; // Limpiar el contenedor
+
+            programs.forEach((program, index) => {
+                const card = document.createElement('div');
+                // Rotar los colores de la nueva paleta
+                const backgroundColorClass = cardColors[index % cardColors.length]; 
+                
+                // Limpiar la clase de fondo anterior y aplicar la nueva
+                card.className = '';
+                card.classList.add(
+                    'program-card', 'p-5', 'rounded-xl', 'flex', 'flex-col', 'items-center', 'gap-4', 
+                    backgroundColorClass, 
+                    'text-center',
+                    'shadow-lg' // Añadimos una sombra para que destaquen más
+                ); 
+                card.setAttribute('role', 'button');
+                card.setAttribute('tabindex', '0');
+                
+                card.onclick = () => executeProgram(program.url, program.name);
+                card.onkeydown = (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        executeProgram(program.url, program.name);
+                    }
+                };
+
+                const iconClass = getFaIconClass(program.name);
+
+                card.innerHTML = `
+                    <i class="${iconClass} icon-fa"></i>
+                    <h2 class="text-xl font-semibold text-white">${program.name}</h2>
+                `;
+                
+                container.appendChild(card);
+            });
+
+            if (programs.length === 0) {
+                container.innerHTML = `
+                    <p class="col-span-full text-center text-gray-500 mt-10">
+                        No hay programas configurados. Añade elementos a la matriz 'programs' en el script.
+                    </p>
+                `;
+            }
+        }
+
+        function toggleCopyrightTooltip() {
+            const tooltip = document.getElementById('copyright-tooltip');
+            tooltip.classList.toggle('visible');
+
+            // Ocultar el tooltip después de 3 segundos
+            if (tooltip.classList.contains('visible')) {
+                setTimeout(() => {
+                    tooltip.classList.remove('visible');
+                }, 3000);
+            }
+        }
+
+        window.onload = renderPrograms;
+
+    </script>
+</body>
+</html>
